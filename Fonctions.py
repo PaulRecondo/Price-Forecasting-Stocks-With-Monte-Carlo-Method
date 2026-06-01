@@ -1,3 +1,5 @@
+#libraries
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import yfinance as yf
@@ -9,7 +11,10 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import plotly.io as pio
 
+#end of libraries
 
+
+#Import Data from yahoo finance
 def get_data (ticker,start_data, end_data) :
     try:
         data = yf.download(ticker,start=start_data, end=end_data)
@@ -18,7 +23,7 @@ def get_data (ticker,start_data, end_data) :
         return f"Error fetching data : {e}"
 
 
-
+#cleanning data
 def transoData(df) :
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.droplevel(1)
@@ -44,7 +49,7 @@ def DF_test (df) :
 
 
 def AD_test(df) :
-    rendements_propres = df['Daily_Return'].dropna()
+    rendements_propres = df['Daily_Return'].dropna()  #delete column of 0
     result = anderson(rendements_propres, dist='norm')
     print('Statistic:%3f' % result.statistic)
     for i in range(len(result.critical_values)):
@@ -76,7 +81,7 @@ def KS_test (df) :
 
 
 def StudentTest(df):
-    rendements_propres = df['Daily_Return'].replace([np.inf, -np.inf], np.nan).dropna()
+    rendements_propres = df['Daily_Return'].replace([np.inf, -np.inf], np.nan).dropna() #put terminate value and delete 0 column
     params = t.fit(rendements_propres)
     dfree,mu,std = params
     print(f"Degrees of freedom:{dfree},Mean:{mu}, Standard Deviation: {std}")
@@ -89,9 +94,9 @@ def StudentTest(df):
     plt.title(title)
     plt.show()
 
-
+#Simulation with plotly better quality graphics but can't analyze over 1000 simulations
 def MCSimulPricing(df):
-    rendements_propres = df['Daily_Return'].replace([np.inf, -np.inf], np.nan).dropna()
+    rendements_propres = df['Daily_Return'].replace([np.inf, -np.inf], np.nan).dropna()  #put terminate value and delete 0 column
     params = t.fit(rendements_propres)
     df_t, loc, scale = params[0], params[1], params[2]
     num_simulations = 100
@@ -126,7 +131,7 @@ def MCSimulPricing(df):
     fig.show()
 
 
-
+#Simulation with matplotlib can analyze over 1000 simulations but lower quality graphics
 def MCSimulPricingPLT(df):
     rendements_propres = df['Daily_Return'].replace([np.inf, -np.inf], np.nan).dropna()
     params = t.fit(rendements_propres)
