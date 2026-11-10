@@ -41,3 +41,4 @@ f.AsianCall(stock_data,250,0.02,300)
 f.EuropeanCallPricing(stock_data,150,0.05,300)
 
 #Soon American Call
+
