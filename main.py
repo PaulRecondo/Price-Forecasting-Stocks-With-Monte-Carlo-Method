@@ -29,6 +29,13 @@ f.AD_test(stock_data)
 f.KS_test(stock_data)
 #T-test (Student Law)
 f.StudentTest(stock_data)
-#Price forecast Simulated by Monte Carlo
+#####Price forecast Simulated by Monte Carlo####
 #f.MCSimulPricing(stock_data)
 f.MCSimulPricingPLT(stock_data)
+
+#Pricing ASIAN CALL
+f.AsianCall(stock_data,250,0.02,300)
+
+
+#Pricing EUROPEAN CALL
+f.EuropeanCallPricing(stock_data,150,0.05,300)
