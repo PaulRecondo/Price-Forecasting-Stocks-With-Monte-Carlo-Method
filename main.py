@@ -8,8 +8,11 @@ from scipy.stats import kstest, t
 import matplotlib as plt
 import plotly.graph_objects as go
 import plotly.io as pio
+import IGraphique as HMI
 
-ticker_symbol = "PREIX" #T.Rowe price equity index 500 fund
+
+
+ticker_symbol = "PREIX"
 start_date = "2005-01-01"
 end_date = "2026-01-01"
 stock_data = f.get_data(ticker_symbol,start_date,end_date)
@@ -34,11 +37,11 @@ f.StudentTest(stock_data)
 f.MCSimulPricingPLT(stock_data)
 
 #Pricing ASIAN CALL
-f.AsianCall(stock_data,250,0.02,300)
+f.AsianCall(stock_data,250,0.02,300,252)
 
 
 #Pricing EUROPEAN CALL
-f.EuropeanCallPricing(stock_data,150,0.05,300)
+f.EuropeanCallPricing(stock_data,150,0.05,300,252)
 
 #Soon American Call
 
