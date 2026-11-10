@@ -229,3 +229,6 @@ def EuropeanCallPricing(df,strike_price, risk_free_rate = 0.03,num_simulations =
 
     print(f"Pricing Estimation of the EUROPEAN Call: (Strike = {strike_price}, r = {risk_free_rate*100}%) : {euro_call_price:.4f} $")
     return euro_call_price
+
+
+#Amrican Call soon
