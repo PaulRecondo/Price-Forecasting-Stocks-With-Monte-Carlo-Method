@@ -1,5 +1,3 @@
-#libraries
-
 import matplotlib.pyplot as plt
 import pandas as pd
 import yfinance as yf
@@ -11,11 +9,8 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import plotly.io as pio
 
-#end of libraries
 
-
-#Import Data from yahoo finance
-def get_data(ticker,start_data, end_data):
+def get_data (ticker,start_data, end_data) :
     try:
         data = yf.download(ticker,start=start_data, end=end_data)
         return(data)
@@ -23,7 +18,7 @@ def get_data(ticker,start_data, end_data):
         return f"Error fetching data : {e}"
 
 
-#cleanning data
+
 def transoData(df) :
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.droplevel(1)
@@ -49,7 +44,7 @@ def DF_test (df) :
 
 
 def AD_test(df) :
-    rendements_propres = df['Daily_Return'].dropna()  #delete column of 0
+    rendements_propres = df['Daily_Return'].dropna()
     result = anderson(rendements_propres, dist='norm')
     print('Statistic:%3f' % result.statistic)
     for i in range(len(result.critical_values)):
@@ -81,7 +76,7 @@ def KS_test (df) :
 
 
 def StudentTest(df):
-    rendements_propres = df['Daily_Return'].replace([np.inf, -np.inf], np.nan).dropna() #put terminate value and delete 0 column
+    rendements_propres = df['Daily_Return'].replace([np.inf, -np.inf], np.nan).dropna()
     params = t.fit(rendements_propres)
     dfree,mu,std = params
     print(f"Degrees of freedom:{dfree},Mean:{mu}, Standard Deviation: {std}")
@@ -95,10 +90,12 @@ def StudentTest(df):
     plt.show()
 
 
-def GenererTrajectoires(df, num_simulations=1000, forecast_days=252):
+def MCSimulPricing(df):
     rendements_propres = df['Daily_Return'].replace([np.inf, -np.inf], np.nan).dropna()
     params = t.fit(rendements_propres)
     df_t, loc, scale = params[0], params[1], params[2]
+    num_simulations = 100
+    forecast_days = 252
 
     simulated_returns = t.rvs(df_t, loc=loc, scale=scale, size=(forecast_days, num_simulations))
     start_price = df['Close'].iloc[-1]
@@ -106,23 +103,7 @@ def GenererTrajectoires(df, num_simulations=1000, forecast_days=252):
     price_path[0] = start_price
 
     for k in range(1, forecast_days):
-        price_path[k] = np.maximum(price_path[k - 1] * (1 + simulated_returns[k]), 0)
-
-    return price_path  # Le point clé : la fonction renvoie la matrice
-
-
-
-
-
-#Simulation with plotly better quality graphics but can't analyze over 1000 simulations
-def MCSimulPricing(df):
-    rendements_propres = df['Daily_Return'].replace([np.inf, -np.inf], np.nan).dropna()  #put terminate value and delete 0 column
-    params = t.fit(rendements_propres)
-    df_t, loc, scale = params[0], params[1], params[2]
-    forecast_days = 252
-    num_simulations = 500
-    price_path = GenererTrajectoires(df, num_simulations)
-
+        price_path[k] = np.maximum(price_path[k-1]*(1+simulated_returns[k]), 0)
     lower_bound = np.percentile(price_path, 5, axis=1)
     upper_bound = np.percentile(price_path, 95, axis=1)
     print("Prix de départ :", price_path[0, 0])
@@ -146,7 +127,6 @@ def MCSimulPricing(df):
 
 
 
-#Simulation with matplotlib can analyze over 1000 simulations but lower quality graphics
 def MCSimulPricingPLT(df):
     rendements_propres = df['Daily_Return'].replace([np.inf, -np.inf], np.nan).dropna()
     params = t.fit(rendements_propres)
@@ -154,8 +134,13 @@ def MCSimulPricingPLT(df):
     num_simulations = 500
     forecast_days = 252
 
-    price_path = GenererTrajectoires(df, num_simulations)
+    simulated_returns = t.rvs(df_t, loc=loc, scale=scale, size=(forecast_days, num_simulations))
+    start_price = df['Close'].iloc[-1]
+    price_path = np.zeros_like(simulated_returns)
+    price_path[0] = start_price
 
+    for k in range(1, forecast_days):
+        price_path[k] = np.maximum(price_path[k-1]*(1+simulated_returns[k]), 0)
     lower_bound = np.percentile(price_path, 5, axis=1)
     upper_bound = np.percentile(price_path, 95, axis=1)
     print("Prix de départ :", price_path[0, 0])
@@ -174,61 +159,3 @@ def MCSimulPricingPLT(df):
 
 
 
-#Pricing Asian Call
-
-def AsianCall (df,strike_price,risk_free_rate = 0.03, num_simulations = 100) :
-
-#1. Extraction des paramètres de la distribution de Student existante
-
-    rendements_propres = df['Daily_Return'].replace([np.inf,-np.inf], np.nan).dropna()
-    params = t.fit(rendements_propres)
-    df_t,loc,scale = params[0], params[1], params[2]
-
-    forecast_days = 252 # 1 years Maturity
-
-    #Genration of the price trajectory
-    price_path = GenererTrajectoires(df, num_simulations)
-
-       #Calculation of the mean value of all possibilities
-    average_prices = np.mean(price_path, axis=0)
-
-        #PayOff of an Asian Call
-
-    payoff = np.maximum(average_prices - strike_price, 0)
-
-    T = forecast_days/252.0
-    discount_factor = np.exp(-risk_free_rate*T)
-    asian_call_price = np.mean(payoff)*discount_factor
-
-    print(f"Pricing Estimation of the Asian Call: (Strike = {strike_price}, r = {risk_free_rate*100}%) : {asian_call_price:.4f} $")
-
-    return asian_call_price
-
-
-def EuropeanCallPricing(df,strike_price, risk_free_rate = 0.03,num_simulations = 500) :
-    #Extration of parameters
-
-    rendements_propres = df['Daily_Return'].replace([np.inf, -np.inf], np.nan).dropna()
-    params = t.fit(rendements_propres)
-    df_t, loc, scale = params[0], params[1], params[2]
-
-    forecast_days = 252
-    num_simulations = 500
-
-    #Trajectory generation
-    price_path = GenererTrajectoires(df ,num_simulations)
-    final_prices = price_path[-1, :]
-
-    #PayOffs EUROPEAN CALL
-
-    payoffs = np.maximum(final_prices-strike_price, 0)
-
-    T = forecast_days/252.0
-    discount_factor = np.exp(-risk_free_rate*T)
-    euro_call_price = np.mean(payoffs) * discount_factor
-
-    print(f"Pricing Estimation of the EUROPEAN Call: (Strike = {strike_price}, r = {risk_free_rate*100}%) : {euro_call_price:.4f} $")
-    return euro_call_price
-
-
-#Amrican Call soon
